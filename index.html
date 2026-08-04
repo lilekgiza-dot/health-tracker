@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Здоровье</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --surface-1:      #fcfcfb;
+    --page:           #f4f3ef;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --muted:          #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.08);
+    --good:           #0ca30c;
+    --critical:       #d03b3b;
+    --warning:        #c98500;
+    --good-tint:      rgba(12,163,12,0.10);
+    --critical-tint:  rgba(208,59,59,0.10);
+    --warning-tint:   rgba(201,133,0,0.10);
+    --accent:         #2a78d6;
+    --accent-tint:    rgba(42,120,214,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-1:      #201f1d;
+      --page:           #121211;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --muted:          #898781;
+      --gridline:       #34332f;
+      --border:         rgba(255,255,255,0.09);
+      --good:           #0ca30c;
+      --critical:       #e66767;
+      --warning:        #c98500;
+      --good-tint:      rgba(12,163,12,0.16);
+      --critical-tint:  rgba(230,103,103,0.16);
+      --warning-tint:   rgba(201,133,0,0.16);
+      --accent:         #3987e5;
+      --accent-tint:    rgba(57,135,229,0.16);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 24px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 16px; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .card h2 { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+  .hero { text-align: center; padding: 22px 18px; }
+  .hero .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+  .hero .value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+
+  .cat-list-row { border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; background: var(--page); cursor: pointer; }
+  .cat-list-row .head { display: flex; align-items: center; gap: 10px; }
+  .cat-list-row .head .icon { font-size: 18px; }
+  .cat-list-row .head .name { flex: 1; font-size: 14px; font-weight: 600; }
+  .cat-list-row .head .badge { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 600; }
+  .badge.watch { background: var(--warning-tint); color: var(--warning); }
+  .badge.alert { background: var(--critical-tint); color: var(--critical); }
+  .badge.good { background: var(--good-tint); color: var(--good); }
+  .cat-list-row .detail { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .cat-list-row.open .detail { max-height: 600px; margin-top: 10px; }
+  .cat-list-row .detail-row { font-size: 13px; color: var(--text-secondary); padding: 6px 0; border-top: 1px solid var(--gridline); line-height: 1.4; }
+  .cat-hint { text-align: right; font-size: 11px; color: var(--muted); margin: -6px 0 8px; }
+
+  .check-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gridline); font-size: 13px; }
+  .check-row:last-child { border-bottom: none; }
+  .check-row .box { font-size: 18px; flex: none; }
+  .check-row .txt { flex: 1; }
+  .check-row .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .supp-row { border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; background: var(--page); }
+  .supp-row .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .supp-row .name { font-size: 14px; font-weight: 600; flex: 1; }
+  .supp-row .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .bottom-nav { display: flex; background: var(--page); border-radius: 14px; padding: 4px; gap: 2px; margin-top: 4px; }
+  .bottom-nav .tab { flex: 1; text-align: center; padding: 8px 2px; border-radius: 11px; font-size: 11px; color: var(--muted); }
+  .bottom-nav .tab.active { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
+
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 0; }
+  .placeholder { text-align: center; color: var(--text-secondary); padding: 40px 16px; }
+</style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <div class="placeholder" id="placeholder">Загружаю данные…</div>
+  </div>
+
+<script>
+(function () {
+  var tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var STATUS_LABEL = { watch: "следить", alert: "внимание", good: "норма" };
+  var VIEW_KEYS = ["home", "checkups", "supplements", "notes", "settings"];
+  var VIEW_LABELS = ["Главная", "Обследования", "Добавки", "Заметки", "Настройки"];
+
+  function renderHero(data) {
+    var pendingCheckups = (data.checkups || []).filter(function (c) { return !c.done; }).length;
+    var alerts = (data.categories || []).filter(function (c) { return c.status === "alert"; }).length;
+    return (
+      '<div class="card hero">' +
+        '<div class="label">Последние анализы</div>' +
+        '<div class="value">' + data.last_labs_date + '</div>' +
+        '<div class="empty" style="padding-top:8px;">Обследований осталось: ' + pendingCheckups + (alerts ? " · требует внимания: " + alerts : "") + '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderCategoryList(data) {
+    var rows = (data.categories || []).map(function (c, idx) {
+      var detail = c.items.map(function (t) { return '<div class="detail-row">' + t + '</div>'; }).join("");
+      return (
+        '<div class="cat-list-row" data-idx="' + idx + '" onclick="this.classList.toggle(\'open\')">' +
+          '<div class="head">' +
+            '<span class="icon">' + c.icon + '</span>' +
+            '<span class="name">' + c.name + '</span>' +
+            '<span class="badge ' + c.status + '">' + STATUS_LABEL[c.status] + '</span>' +
+          '</div>' +
+          '<div class="detail">' + detail + '</div>' +
+        '</div>'
+      );
+    }).join("");
+    return '<div class="card"><h2>Категории</h2><div class="cat-hint">Нажми, чтобы открыть</div>' + rows + '</div>';
+  }
+
+  function renderCheckups(data) {
+    var list = data.checkups || [];
+    var rows = list.map(function (c) {
+      return (
+        '<div class="check-row">' +
+          '<span class="box">' + (c.done ? "✅" : "🔲") + '</span>' +
+          '<div class="txt">' + c.name + (c.note ? '<div class="note">' + c.note + '</div>' : '') + '</div>' +
+        '</div>'
+      );
+    }).join("");
+    var done = list.filter(function (c) { return c.done; }).length;
+    return (
+      '<div class="card"><h2>Обследования</h2>' +
+        '<div class="empty" style="padding:0 0 10px;">Сделано ' + done + ' из ' + list.length + '</div>' +
+        rows +
+      '</div>'
+    );
+  }
+
+  function renderSupplements(data) {
+    var rows = (data.supplements || []).map(function (s) {
+      var isOk = s.verdict === "ok";
+      return (
+        '<div class="supp-row">' +
+          '<div class="head">' +
+            '<span class="name">' + s.name + '</span>' +
+            '<span class="badge ' + (isOk ? "good" : "alert") + '">' + (isOk ? "подходит" : "не подходит") + '</span>' +
+          '</div>' +
+          '<div class="note">' + s.note + '</div>' +
+        '</div>'
+      );
+    }).join("");
+    return '<div class="card"><h2>Добавки</h2>' + rows + '</div>';
+  }
+
+  function renderBottomNav() {
+    return '<div class="bottom-nav">' + VIEW_LABELS.map(function (t, i) {
+      return '<div class="tab' + (i === 0 ? ' active' : '') + '" onclick="switchView(\'' + VIEW_KEYS[i] + '\')">' + t + '</div>';
+    }).join("") + '</div>';
+  }
+
+  function render(data) {
+    var app = document.getElementById("app");
+
+    var views = {
+      home: renderHero(data) + renderCategoryList(data),
+      checkups: renderCheckups(data),
+      supplements: renderSupplements(data),
+      notes: '<div class="card"><h2>Заметки</h2><div class="empty">Скоро — раздел ещё не готов</div></div>',
+      settings: '<div class="card"><h2>О приложении</h2><div class="empty">Данные из ДНК-отчёта (MyGenetics) и лабораторных анализов. Не диагноз, справочно — окончательные решения только с врачом.</div></div>'
+    };
+
+    var viewsHtml = VIEW_KEYS.map(function (k) {
+      return '<div class="view" id="view-' + k + '" style="display:' + (k === "home" ? "block" : "none") + '">' + views[k] + '</div>';
+    }).join("");
+
+    app.innerHTML =
+      '<h1 style="font-size:20px;margin:4px 0 2px;">Здоровье</h1>' +
+      '<div class="empty" style="text-align:left;padding:0 0 12px;">ДНК-профиль и анализы</div>' +
+      viewsHtml +
+      renderBottomNav() +
+      '<div class="empty">Обновлено: ' + new Date(data.updated_at).toLocaleString("ru-RU", {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) + '</div>';
+  }
+
+  window.switchView = function (key) {
+    VIEW_KEYS.forEach(function (k) {
+      var el = document.getElementById("view-" + k);
+      if (el) el.style.display = (k === key) ? "block" : "none";
+    });
+    document.querySelectorAll(".bottom-nav .tab").forEach(function (t, i) {
+      t.classList.toggle("active", VIEW_KEYS[i] === key);
+    });
+  };
+
+  function showError() {
+    document.getElementById("app").innerHTML = '<div class="placeholder">Не получилось загрузить данные.<br>Открой чуть позже.</div>';
+  }
+
+  fetch("data.json?v=" + Date.now())
+    .then(function (r) { if (!r.ok) throw new Error("bad response"); return r.json(); })
+    .then(render)
+    .catch(showError);
+})();
+</script>
+</body>
+</html>
