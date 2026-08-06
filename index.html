@@ -164,20 +164,58 @@
     );
   }
 
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+
   function renderSupplements(data) {
-    var rows = (data.supplements || []).map(function (s) {
-      var isOk = s.verdict === "ok";
+    var log = data.intake_log || [];
+    var today = todayStr();
+    var takenToday = {};
+    log.forEach(function (e) { if (e.date === today) takenToday[e.name] = true; });
+
+    var order = { "утро": 0, "день": 1, "вечер": 2 };
+    var list = (data.supplements || []).slice().sort(function (a, b) { return (order[a.time]||9) - (order[b.time]||9); });
+
+    var byTime = {};
+    list.forEach(function (s) {
+      byTime[s.time] = byTime[s.time] || [];
+      byTime[s.time].push(s);
+    });
+
+    var checklist = ["утро", "день", "вечер"].filter(function (t) { return byTime[t]; }).map(function (t) {
+      var rows = byTime[t].map(function (s) {
+        var done = takenToday[s.name];
+        var watchBadge = s.verdict === "watch" ? '<span class="badge watch" style="margin-left:6px;">следить</span>' : "";
+        return (
+          '<div class="check-row">' +
+            '<span class="box">' + (done ? "✅" : "🔲") + '</span>' +
+            '<div class="txt">' + s.name + watchBadge + '<div class="note">' + s.purpose + '</div></div>' +
+          '</div>'
+        );
+      }).join("");
+      return '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;margin:10px 0 4px;">' + t + '</div>' + rows;
+    }).join("");
+
+    var avoidRows = (data.supplements_avoid || []).map(function (s) {
       return (
         '<div class="supp-row">' +
-          '<div class="head">' +
-            '<span class="name">' + s.name + '</span>' +
-            '<span class="badge ' + (isOk ? "good" : "alert") + '">' + (isOk ? "подходит" : "не подходит") + '</span>' +
-          '</div>' +
-          '<div class="note">' + s.note + '</div>' +
+          '<div class="head"><span class="name">' + s.name + '</span><span class="badge alert">не подходит</span></div>' +
+          '<div class="note">' + s.reason + '</div>' +
         '</div>'
       );
     }).join("");
-    return '<div class="card"><h2>Добавки</h2>' + rows + '</div>';
+
+    var historyRows = log.slice().sort(function (a, b) { return b.date.localeCompare(a.date); }).slice(0, 30).map(function (e) {
+      return '<div class="check-row"><span class="box">✅</span><div class="txt">' + e.name + '<div class="note">' + e.date + '</div></div></div>';
+    }).join("") || '<div class="empty">Пока нет записей</div>';
+
+    return (
+      '<div class="card"><h2>Сегодня — приём</h2>' + checklist + '</div>' +
+      '<div class="card"><h2>Не подходит / избегать</h2>' + avoidRows + '</div>' +
+      '<div class="card"><h2>История приёма (даты)</h2>' + historyRows + '</div>'
+    );
   }
 
   function renderBottomNav() {
